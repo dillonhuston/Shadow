@@ -1,42 +1,79 @@
+import os
+import base64
+import hashlib
+import logging
+
 from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
-from Crypto.Random import get_random_bytes
+
 from app.config import Config
-import base64
-import os
-import hashlib
+
+logger = logging.getLogger(__name__)
+
+
+class EncryptionError(Exception):
+    """Custom exception for encryption/decryption errors."""
+    pass
+
 
 class EncryptionService:
-    class EncryptionError(Exception):
-        pass
+    """Handles file encryption and decryption using AES-EAX."""
 
-    
-    def encrypt(data, filename, user_id, key):
+    @staticmethod
+    def _ensure_bytes_key(key: str | bytes | bytearray) -> bytes:
+        """Safely convert key to bytes."""
+        if isinstance(key, bytes):
+            return key
+        elif isinstance(key, bytearray):
+            return bytes(key)
+        elif isinstance(key, str):
+            return key.encode('utf-8')
+        else:
+            raise EncryptionError("Invalid key type")
+
+    @staticmethod
+    def _ensure_str_key(key: str | bytes | bytearray) -> str:
+        """Safely convert key to string for PBKDF2."""
+        if isinstance(key, str):
+            return key
+        elif isinstance(key, bytes):
+            return key.hex()
+        elif isinstance(key, bytearray):
+            return bytes(key).hex()
+        else:
+            raise EncryptionError("Invalid key type")
+
+    @staticmethod
+    def encrypt(data: str | bytes, filename: str, user_id: str, key: str | bytes | bytearray) -> str:
         try:
             if isinstance(data, str):
-                data_bytes = base64.b64decode(data)
+                data_bytes = data.encode('utf-8')
             else:
                 data_bytes = data
 
-            if not isinstance(key, bytes):
-                key = key.encode('utf-8')
-            salt = hashlib.sha256(user_id.encode('utf-8')).digest()
-            print(f"Encrypt - user_id: {user_id}, salt (hex): {salt.hex()}")
-            derived_key = PBKDF2(key, salt, dkLen=32, count=100000)
-            derived_key = derived_key[:32]
-            key_hash = hashlib.sha256(derived_key).digest()
-            print(f"Encrypt - raw key: {key.hex() if isinstance(key, bytes) else key}, derived key (hex): {derived_key.hex()}, key_hash (hex): {key_hash.hex()}")
+            # Convert key to string for PBKDF2
+            key_str = EncryptionService._ensure_str_key(key)
 
+            # Derive key
+            salt = hashlib.sha256(user_id.encode('utf-8')).digest()
+            derived_key = PBKDF2(key_str, salt, dkLen=Config.PBKDF2_DK_LEN, count=Config.PBKDF2_ITERATIONS)
+            derived_key = derived_key[:Config.PBKDF2_DK_LEN]
+
+            key_hash = hashlib.sha256(derived_key).digest()
+
+            # Encrypt
             cipher = AES.new(derived_key, AES.MODE_EAX)
             nonce = cipher.nonce
             ciphertext, tag = cipher.encrypt_and_digest(data_bytes)
 
-            base_name = f"{hashlib.sha1(user_id.encode('utf-8')).hexdigest()[:8]}_{filename}.enc"
+            # Unique filename
+            base_name = f"{hashlib.sha1(user_id.encode('utf-8')).hexdigest()[:8]}_{filename}{Config.ENCRYPTED_FILE_EXTENSION}"
             encrypted_filename = base_name
             counter = 1
             file_path = os.path.join(Config.ENCRYPTED_FILE_PATH, encrypted_filename)
+
             while os.path.exists(file_path):
-                encrypted_filename = f"{base_name.split('.enc')[0]}_{counter}.enc"
+                encrypted_filename = f"{base_name.split(Config.ENCRYPTED_FILE_EXTENSION)[0]}_{counter}{Config.ENCRYPTED_FILE_EXTENSION}"
                 file_path = os.path.join(Config.ENCRYPTED_FILE_PATH, encrypted_filename)
                 counter += 1
 
@@ -45,46 +82,54 @@ class EncryptionService:
             with open(file_path, 'wb') as f:
                 f.write(key_hash + nonce + tag + ciphertext)
 
+            logger.info(f"File encrypted: {encrypted_filename}")
             return encrypted_filename
 
-        except (base64.binascii.Error, ValueError, OSError) as e:
-            raise EncryptionService.EncryptionError(f"Encryption failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"Encryption failed for {filename}: {e}")
+            raise EncryptionError(f"Encryption failed: {str(e)}")
 
-    
-    def decrypt(encrypted_filename, user_id, key):
+    @staticmethod
+    def decrypt(encrypted_filename: str, user_id: str, key: str | bytes | bytearray) -> bytes:
+        """
+        Decrypt a file and return the raw bytes.
+        Returns bytes directly instead of base64 encoded string.
+        """
         try:
             file_path = os.path.join(Config.ENCRYPTED_FILE_PATH, encrypted_filename)
-
             if not os.path.exists(file_path):
-                raise EncryptionService.EncryptionError("File not found")
+                raise EncryptionError("File not found")
 
-            if not isinstance(key, bytes):
-                key = key.encode('utf-8')
+            # Convert key to string for PBKDF2
+            key_str = EncryptionService._ensure_str_key(key)
+
             salt = hashlib.sha256(user_id.encode('utf-8')).digest()
-            print(f"Decrypt - user_id: {user_id}, salt (hex): {salt.hex()}")
-            derived_key = PBKDF2(key, salt, dkLen=32, count=100000)
-            derived_key = derived_key[:32]
+            derived_key = PBKDF2(key_str, salt, dkLen=Config.PBKDF2_DK_LEN, count=Config.PBKDF2_ITERATIONS)
+            derived_key = derived_key[:Config.PBKDF2_DK_LEN]
             key_hash = hashlib.sha256(derived_key).digest()
-            print(f"Decrypt - raw key: {key.hex() if isinstance(key, bytes) else key}, derived key (hex): {derived_key.hex()}, key_hash (hex): {key_hash.hex()}")
 
             with open(file_path, 'rb') as f:
                 encrypted_data = f.read()
 
-            if len(encrypted_data) < 64:
-                raise EncryptionService.EncryptionError("Encrypted data too short")
+            min_size = Config.KEY_HASH_SIZE + Config.NONCE_SIZE + Config.TAG_SIZE
+            if len(encrypted_data) < min_size:
+                raise EncryptionError("Encrypted data too short")
 
-            stored_key_hash = encrypted_data[:32]
-            nonce = encrypted_data[32:48]
-            tag = encrypted_data[48:64]
-            ciphertext = encrypted_data[64:]
+            stored_key_hash = encrypted_data[:Config.KEY_HASH_SIZE]
+            nonce = encrypted_data[Config.KEY_HASH_SIZE:Config.KEY_HASH_SIZE + Config.NONCE_SIZE]
+            tag = encrypted_data[Config.KEY_HASH_SIZE + Config.NONCE_SIZE:Config.KEY_HASH_SIZE + Config.NONCE_SIZE + Config.TAG_SIZE]
+            ciphertext = encrypted_data[Config.KEY_HASH_SIZE + Config.NONCE_SIZE + Config.TAG_SIZE:]
 
-            print(f"Decrypt - stored_key_hash: {stored_key_hash.hex()}, computed_key_hash: {key_hash.hex()}")
             if stored_key_hash != key_hash:
-                raise EncryptionService.EncryptionError("Key mismatch detected")
+                raise EncryptionError("Key mismatch detected")
 
             cipher = AES.new(derived_key, AES.MODE_EAX, nonce=nonce)
-            data = cipher.decrypt_and_verify(ciphertext, tag)
-            return base64.b64encode(data).decode('utf-8')
+            decrypted_data = cipher.decrypt_and_verify(ciphertext, tag)
 
-        except (OSError, ValueError, EncryptionService.EncryptionError) as e:
-            raise EncryptionService.EncryptionError(f"Decryption failed: {str(e)}")
+            return decrypted_data
+
+        except EncryptionError:
+            raise
+        except Exception as e:
+            logger.error(f"Decryption failed for {encrypted_filename}: {e}")
+            raise EncryptionError(f"Decryption failed: {str(e)}")

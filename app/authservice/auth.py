@@ -1,7 +1,6 @@
 import os 
 import uuid
 import jwt
-
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
@@ -11,7 +10,10 @@ from app.models.user import User
 from app.schemas.User import UserSignup
 from dotenv import load_dotenv
 
-SECRET_KEY = os.getenv("SECRET_KEY", "default-key")
+load_dotenv()
+
+# Use environment variables
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
@@ -36,7 +38,6 @@ def verify_web_token(token: str):
     except InvalidTokenError:
         return None
 
-
 def add_user(db: Session, user_data: UserSignup):
     if get_user_by_username(db, user_data.username):
         raise HTTPException(status_code=400, detail="Username already registered.")
@@ -56,7 +57,6 @@ def add_user(db: Session, user_data: UserSignup):
     db.refresh(new_user)
     return new_user
 
-
 def get_user_by_username(db: Session, username: str):
     return db.query(User).filter(User.username == username).first()
 
@@ -68,6 +68,3 @@ def authenticate_user(db: Session, username: str, password: str):
     if not user or not verify_password(password, str(user.password)):
         return None
     return user
-
-
-

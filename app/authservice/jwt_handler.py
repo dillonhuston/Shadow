@@ -1,15 +1,21 @@
 import jwt
-
+import os
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jwt.exceptions import PyJWTError 
 from app.models.db import get_db
+from app.models.user import User
 from app.authservice.auth import get_user_by_username
+from dotenv import load_dotenv
+
+load_dotenv()
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-SECRET_KEY = "your-secret-key-change-this" 
-ALGORITHM = "HS256"
+# Use environment variables with fallbacks
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
@@ -25,7 +31,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         if not isinstance(username, str):
             raise credentials_exception
             
-    except PyJWTError:
+    except PyJWTError as e:
+        print(f"[JWT] Decode error: {e}")  # Debug logging
         raise credentials_exception
     
     user = get_user_by_username(db, username)
