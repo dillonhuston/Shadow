@@ -4,85 +4,69 @@
 
 ** website is a demo do not use real credentials **
 
-**Secure, Self-Hosted File Storage**
+**ShadowBox API*
 
-ShadowBox is an easy-to-use, encrypted file storage system you can run on your own PC, Raspberry Pi, or server. Access files securely from any device on your local network or set up remote access. Files are encrypted with AES-256 before storage and only decrypted when you download them. You control your data with no third-party services.
+ShadowBox provides a hardened API for storing files with AES-256 encryption at rest. Built for security, the system ensures files are encrypted before hitting the disk and only decrypted upon authorized download. Designed as a modular service, it is perfect for deployment on local networks, private servers, or Raspberry Pi environments.
 
-## Key Features
-- Sync files across devices with one account
-- AES-256 encryption for all uploads
-- Files decrypted only on download
-- Secure file deletion (removed from database and device)
-- Simple web interface (Dart-based, easy to customize)
-- Lightweight Python Flask backend
+
+## Architecture & Security
+- SEncrypted Storage: Implements AES-256 encryption using the cryptography library.
+-Modular Design: Built with a clean separation of concerns using Service-Oriented Architecture (SOA).
+- Secure Auth: Stateless authentication using JWT (JSON Web Tokens) with OAuth2 bearer flow.
+- Dependency Injection: Clean API design using FastAPI dependency injection for DB sessions and security handlers.
 
 ## Tech Stack
-- **Backend**: Python, Flask, SQLAlchemy
+- **Backend**: Python, FastAPI, SQLAlchemy
 - **Frontend**: Dart (replaceable with any frontend)
-- **Encryption**: AES-256
+- **Security**: AES-256, PyJWT, Passlib(Bcrypt), Cryptography(Fernet)
 - **Database**: SQLite (swappable)
+- **Infrastructure**: Docker, Uvicorn
 
-## Get Started
+## QUICK START (Docker)
+
 
 ### Requirements
 - Python 3.8+ (for backend)
 - Dart (optional, for frontend)
 - OR Docker (easiest setup)
 
-### Option 1: Run Locally
 
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/dillionhuston/Shadow.git
-   cd Shadow
-   ```
 
-2. **Run the backend**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   flask run
-   ```
+```bash
+# Clone the repository
+git clone [https://github.com/dillionhuston/Shadow.git](https://github.com/dillionhuston/Shadow.git)
+cd Shadow
 
-3. **Run the frontend**
-   ```bash
-   cd ../frontend
-   dart pub get
-   dart run
-   ```
+# Build the container
+docker build -t shadowbox-api .
 
-### Option 2: Run with Docker
+# Run the container
+docker run -p 8000:8000 --env-file .env shadowbox-api
+```
+## API Documentation
 
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/dillionhuston/Shadow.git
-   cd Shadow
-   ```
+Once running, navigate to http://localhost:8000/docs to view the auto-generated Swagger/OpenAPI documentation. You can test endpoints (signup, login, upload, dashboard) directly from there.
 
-2. **Build and run**
-   ```bash
-   cd backend
-   docker build -t shadowbox .
-   docker run -p 5000:5000 shadowbox
-   ```
 
-## Future Plans
-- Local encryption key management
-- User accounts and file permissions
-- File versioning and shared folders
-- Support for decentralized storage (e.g., IPFS)
+## Development Setup
 
-## Contributing
-- Improve the web interface
-- Optimize backend performance
-- Add new features
-- Test encryption and security
+- Environment: Create a .env file with SECRET_KEY, ALGORITHM, DATABASE_URL, and UPLOAD_FILE_PATH.
+
+- Dependencies: pip install -r requirements.txt
+
+- Run Dev: uvicorn main:app --reload
+
+- Testing: To be added.
 
 ## Why ShadowBox?
-- Full control over your files and server
-- No third-party tracking or storage
-- Runs on low-power devices like Raspberry Pi
-- Great starting point for custom projects
+
+- Zero Third-Party Tracking: Full sovereignty over your file system.
+
+- Production-Grade Auth: JWT-based identity management.
+
+- Extensible: Built with a modular router/service pattern, making it easy to add new storage backends or features.
+
+
 
 ## License
 MIT—free to use, modify, and share
