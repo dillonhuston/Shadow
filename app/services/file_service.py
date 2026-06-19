@@ -10,9 +10,9 @@ from app.models.user import User
 from app.config import Config
 from app.services.encryption import EncryptionService, EncryptionError
 
-
+encryption_service = EncryptionService()
 class FileService:
-    
+
     @staticmethod
     def _get_user_key(user: User) -> str:
         """Safely extract user's key as string."""
@@ -51,7 +51,7 @@ class FileService:
             user_key = FileService._get_user_key(user)
             
             # Encrypt the file
-            encrypted_filename = EncryptionService.encrypt(
+            encrypted_filename = encryption_service.encrypt(
                 encoded_data,
                 safe_filename,
                 str(user.id),
@@ -140,7 +140,7 @@ class FileService:
             user_key = FileService._get_user_key(user)
             
             # Decrypt the file
-            decrypted_b64 = EncryptionService.decrypt(
+            decrypted_b64 = encryption_service.decrypt(
                 filename,
                 str(user.id),
                 user_key

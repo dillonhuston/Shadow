@@ -8,17 +8,17 @@ from sqlalchemy.orm import Session
 
 from app.models.db import get_db
 from app.models.user import User
-from app.authservice.jwt_handler import get_current_user
+from app.authservice.jwt_handler import JWTHandler
 from app.services.file_service import FileService
 from app.services.encryption import EncryptionError
 
 router = APIRouter(prefix="/file", tags=["files"])
-
+jwt_handle = JWTHandler()
 
 @router.post('/upload', status_code=201)
 async def upload_file(
     file: UploadFile,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(jwt_handle.get_current_user),
     db: Session = Depends(get_db)):
 
     if not file or not file.filename:
@@ -47,7 +47,7 @@ async def upload_file(
 
 @router.get('/files')
 def list_files(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(jwt_handle.get_current_user),
     db: Session = Depends(get_db)):
 
     try:
@@ -60,7 +60,7 @@ def list_files(
 @router.get('/download/{file_id}')
 async def download_file(
     file_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(jwt_handle.get_current_user),
     db: Session = Depends(get_db)):
 
     try:
@@ -104,7 +104,7 @@ async def download_file(
 @router.delete('/delete/{file_id}')
 def delete_file(
     file_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(jwt_handle.get_current_user),
     db: Session = Depends(get_db)):
     
     try:

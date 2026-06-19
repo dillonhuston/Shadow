@@ -12,7 +12,6 @@ class FileStorageService:
 
     @staticmethod
     def get_dir_files(user_id: int, db: Session):
-        """Fixed: Now requires db session (no more .query on model)"""
         files = db.query(FileModel).filter_by(user_id=user_id).all()
         return [file.filename for file in files]
 

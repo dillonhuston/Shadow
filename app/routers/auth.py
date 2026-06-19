@@ -5,24 +5,23 @@ from app.models.db import get_db
 from app.models.user import User
 from app.schemas.User import UserLogin, UserSignup, UserSignupResponse, UserSignOnResponse
 
-from app.authservice.auth import (
-    add_user, 
-    get_user_by_username, 
-    authenticate_user, 
-    generate_web_token, 
-    verify_password, 
-    get_password_hash
-)
-from app.authservice.jwt_handler import get_current_user
+from app.authservice.jwt_handler import JWTHandler
+from app.authservice.auth import AuthService
+from app.authservice.user import AuthUserFuncs
+
+
+jwt_handle = JWTHandler()
+auth_service = AuthService()
+user_auth_funcs = AuthUserFuncs()
 
 router = APIRouter(prefix="/auth")
 
 @router.post('/signup', response_model=UserSignupResponse)
 def signup(user: UserSignup, db: Session = Depends(get_db)):
-    if get_user_by_username(db, user.username):
+    if user_auth_funcs.get_user_by_username(db, user.username):
         raise HTTPException(status_code=400, detail="Username already exists")
     
-    new_user = add_user(db, user)
+    new_user = user_auth_funcs.add_user(db, user)
     return {
         "id": str(new_user.id),
         "email": new_user.email
@@ -30,7 +29,7 @@ def signup(user: UserSignup, db: Session = Depends(get_db)):
 
 @router.post('/login', response_model=UserSignOnResponse)
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    user = authenticate_user(db, user_data.username, user_data.password)
+    user = user_auth_funcs.authenticate_user(db, user_data.username, user_data.password)
     
     if not user:
         raise HTTPException(
@@ -38,7 +37,7 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect username or password"
         )
     
-    token = generate_web_token({
+    token = auth_service.generate_web_token({
         "sub": user.username,
         "id": str(user.id)}
     )
@@ -58,17 +57,16 @@ def change_password(
     current_password: str, 
     new_password: str, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)):
+    current_user: User = Depends(jwt_handle.get_current_user)):
 
     # Make sure password is strong
     if not re.match(r'^(?=.*[A-Za-z])(?=.*\d).{8,}$', new_password):
         raise HTTPException(status_code=400, detail="Password must contain at least one letter and one number")
     
     # Check current password
-    if not verify_password(current_password, str(current_user.password)):
+    if not user_auth_funcs.verify_password(current_password, str(current_user.password)):
         raise HTTPException(status_code=400, detail="Current password incorrect")
         
-    current_user.password = get_password_hash(new_password)# type: ignore
-    db.commit()
+    current_user.password = auth_service.get_password_hash(new_password)
     
     return {"message": "Password changed successfully"}
