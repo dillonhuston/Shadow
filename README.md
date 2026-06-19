@@ -2,9 +2,8 @@
 
 ![ShadowBox Demo](demo.gif)
 
-** website is a demo do not use real credentials **
 
-**ShadowBox API*
+**ShadowBox API**
 
 ShadowBox provides a hardened API for storing files with AES-256 encryption at rest. Built for security, the system ensures files are encrypted before hitting the disk and only decrypted upon authorized download. Designed as a modular service, it is perfect for deployment on local networks, private servers, or Raspberry Pi environments.
 
