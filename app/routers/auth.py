@@ -1,7 +1,9 @@
 import re
+from  app.dependencies import get_user_service
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.db import get_db
+
 from app.models.user import User
 from app.schemas.User import UserLogin, UserSignup, UserSignupResponse, UserSignOnResponse
 
@@ -9,7 +11,10 @@ from app.authservice.jwt_handler import JWTHandler
 from app.authservice.auth import AuthService
 from app.authservice.user import AuthUserFuncs
 
+from app.services.user_service import UserService
 
+
+#TODO remove this and add DI
 jwt_handle = JWTHandler()
 auth_service = AuthService()
 user_auth_funcs = AuthUserFuncs()
@@ -17,15 +22,13 @@ user_auth_funcs = AuthUserFuncs()
 router = APIRouter(prefix="/auth")
 
 @router.post('/signup', response_model=UserSignupResponse)
-def signup(user: UserSignup, db: Session = Depends(get_db)):
-    if user_auth_funcs.get_user_by_username(db, user.username):
-        raise HTTPException(status_code=400, detail="Username already exists")
-    
-    new_user = user_auth_funcs.add_user(db, user)
-    return {
-        "id": str(new_user.id),
-        "email": new_user.email
-    }
+def signup(
+    user: UserSignup,
+    userservice: UserService = Depends(get_user_service),
+    db: Session = Depends(get_db)):
+    return userservice.register(db, user)
+
+
 
 @router.post('/login', response_model=UserSignOnResponse)
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
