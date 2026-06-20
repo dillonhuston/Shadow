@@ -1,10 +1,13 @@
 import uuid
 import os
+import re
 
-from app.exceptions.ecxceptions import UserAlreadyExistsError, AuthenticationError
-from app.schemas.User import UserSignup, UserLogin
+from app.exceptions.ecxceptions import UserAlreadyExistsError, AuthenticationError, IncorrectPasswordError 
+from app.schemas.User import UserSignup, UserLogin, ChangePassword
+
 from app.models.user import User
 from sqlalchemy.orm import Session
+
 from app.DatabaseOps.DatabaseRespitory import DatabaseOps
 from app.authservice.auth import AuthService
 from app.authservice.jwt_handler import JWTHandler
@@ -12,7 +15,7 @@ from app.authservice.jwt_handler import JWTHandler
 
 class UserService():
 
-    def __init__(self, dbops: DatabaseOps, auth: AuthService, jwt_handle: JWTHandler) -> None:
+    def __init__(self, dbops: DatabaseOps, auth: AuthService, jwt_handle: JWTHandler ) -> None:
         self.db_ops = dbops
         self.auth = auth
 
@@ -52,6 +55,15 @@ class UserService():
             "access_token": token,
             "token_type": "bearer"
         }
-   
+    
 
-
+    def change_password(self, db: Session, user: User, password_data: ChangePassword):
+        if not re.match(r'^(?=.*[A-Za-z])(?=.*\d).{8,}$',password_data.new_password):
+            raise IncorrectPasswordError
+        
+        if not self.auth.verify_password(password_data.current_password, str(user.password)):
+            raise IncorrectPasswordError
+        user.password = self.auth.get_password_hash(password_data.new_password)
+        db.commit()
+        return{"message": "Pasword changed"}
+        

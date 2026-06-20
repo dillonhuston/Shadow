@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.User import UserSignup
 
-class DatabaseOps:
+class DatabaseOps():
     
     def GetUserByusername(self, db: Session, user: str):
         return db.query(User).filter(User.username == user).first()

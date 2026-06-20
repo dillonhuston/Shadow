@@ -1,19 +1,18 @@
 import os 
-import uuid
 import jwt
+
 from datetime import datetime, timezone, timedelta
-from sqlalchemy.orm import Session
-from fastapi import HTTPException
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from passlib.context import CryptContext
-from app.models.user import User
-from app.schemas.User import UserSignup
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class AuthService():
     def __init__(self):
+
+        #TODO Move to config.py
+
         self.SECRETKEY = os.getenv("SECRET_KEY")
         self.ALGORTHIM = os.getenv("ALGROITHM")
         self.ACCESS_TOKEN_EXPIRE = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))

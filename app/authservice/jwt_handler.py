@@ -6,11 +6,15 @@ from sqlalchemy.orm import Session
 from jwt.exceptions import PyJWTError 
 from app.models.db import get_db
 from app.models.user import User
-from app.authservice.user import AuthUserFuncs
+from app.authservice.auth import AuthService
 from dotenv import load_dotenv
 
+from app.DatabaseOps.DatabaseRespitory import DatabaseOps
+
+#TDOo Make dependecy injection
 load_dotenv()
-auth_service = AuthUserFuncs()
+auth_service = AuthService()
+db_ops = DatabaseOps()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
@@ -35,10 +39,10 @@ class JWTHandler():
                 raise credentials_exception
                 
         except PyJWTError as e:
-            print(f"[JWT] Decode error: {e}")  # Debug logging
+            print(f"[JWT] Decode error: {e}")  #TODO add proper logging
             raise credentials_exception
         
-        user = auth_service.get_user_by_username(db, username)
+        user = db_ops.GetUserByusername(db, username)
         
         if user is None:
             raise credentials_exception
