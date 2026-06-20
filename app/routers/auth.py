@@ -1,5 +1,5 @@
 import re
-from  app.dependencies import get_user_service
+from app.dependencies import get_user_service
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.db import get_db
@@ -31,25 +31,12 @@ def signup(
 
 
 @router.post('/login', response_model=UserSignOnResponse)
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    user = user_auth_funcs.authenticate_user(db, user_data.username, user_data.password)
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
-        )
-    
-    token = auth_service.generate_web_token({
-        "sub": user.username,
-        "id": str(user.id)}
-    )
-    return {
-        "id": str(user.id),
-        "email": user.email,
-        "access_token": token,
-        "token_type": "bearer"
-    }
+def login(
+    user_data: UserLogin,
+    userservice: UserService = Depends(get_user_service),
+    db: Session = Depends(get_db)):
+    return userservice.login(db, user_data)
+   
 
 @router.post('/logout')
 def logout():
@@ -67,7 +54,7 @@ def change_password(
         raise HTTPException(status_code=400, detail="Password must contain at least one letter and one number")
     
     # Check current password
-    if not user_auth_funcs.verify_password(current_password, str(current_user.password)):
+    if not auth_service.verify_password(current_password, str(current_user.password)):
         raise HTTPException(status_code=400, detail="Current password incorrect")
         
     current_user.password = auth_service.get_password_hash(new_password)

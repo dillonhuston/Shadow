@@ -21,11 +21,13 @@ class UserLogin(BaseModel):
 
 class UserSignupResponse(BaseModel):
     id: str
+    username: str
     email: str
     
 
 class UserSignOnResponse(BaseModel):
     id: str
+    username: str
     email: str
     access_token:str
     token_type: str

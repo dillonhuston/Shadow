@@ -15,11 +15,15 @@ load_dotenv()
 class AuthService():
     def __init__(self):
         self.SECRETKEY = os.getenv("SECRET_KEY")
-        self.ALGORTHIM = os.getenv("ALGORITHM")
+        self.ALGORTHIM = os.getenv("ALGROITHM")
         self.ACCESS_TOKEN_EXPIRE = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+    def verify_password(self,plain_password: str, hashed_password: str) -> bool:
+        return self.pwd_context.verify(plain_password[:72], hashed_password)
 
+    
+   
     def get_password_hash(self, password: str) -> str:
         return self.pwd_context.hash(password[:72])
     

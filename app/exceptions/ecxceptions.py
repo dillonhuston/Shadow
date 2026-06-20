@@ -3,3 +3,6 @@ class ServiceError(Exception):
 
 class UserAlreadyExistsError(ServiceError):
     pass
+
+class AuthenticationError(ServiceError):
+    pass
