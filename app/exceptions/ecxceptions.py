@@ -9,3 +9,10 @@ class AuthenticationError(ServiceError):
 
 class IncorrectPasswordError(ServiceError):
     pass
+
+
+class FileError(ServiceError):
+    pass
+
+class EncryptionServiceError(ServiceError):
+    pass

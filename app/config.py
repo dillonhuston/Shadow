@@ -18,3 +18,19 @@ class Config:
     
     # File naming
     ENCRYPTED_FILE_EXTENSION = os.getenv('ENCRYPTED_FILE_EXTENSION', '.enc')
+
+    
+    MIMETYPES = {
+            'txt': 'text/plain',
+            'pdf': 'application/pdf',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'zip': 'application/zip',
+            'csv': 'text/csv',
+            'json': 'application/json',
+            'xml': 'application/xml'
+        }
