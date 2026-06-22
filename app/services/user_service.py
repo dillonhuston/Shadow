@@ -2,7 +2,7 @@ import uuid
 import os
 import re
 
-from app.exceptions.ecxceptions import UserAlreadyExistsError, AuthenticationError, IncorrectPasswordError 
+from app.exceptions.exceptions import UserAlreadyExistsError, AuthenticationError, IncorrectPasswordError 
 from app.schemas.User import UserSignup, UserLogin, ChangePassword
 
 from app.models.user import User

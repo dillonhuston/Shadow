@@ -9,7 +9,7 @@ from app.models.user import User
 from app.config import Config
 from app.services.encryption import EncryptionService
 from app.DatabaseOps.DatabaseRespitory import DatabaseOps
-from app.exceptions.ecxceptions import FileError, EncryptionServiceError
+from app.exceptions.exceptions import FileError, EncryptionServiceError
 
 class FileService:
     def __init__(self, db_ops: DatabaseOps, encryption_service: EncryptionService) -> None:
