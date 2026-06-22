@@ -1,23 +1,20 @@
-from fastapi import APIRouter, Depends
-from app.authservice.jwt_handler import JWTHandler
+from fastapi import APIRouter, Depends, HTTPException
 from app.models.user import User
-from app.models.file import File 
 from app.models.db import get_db
 from sqlalchemy.orm import Session
+from app.services.file_service import FileService
 
+from app.authservice.jwt_handler import JWTHandler
 router = APIRouter(prefix="/user")
-jwt_handle = JWTHandler()
 
 @router.get('/dashboard')
 def dashboard(
+    file_service: FileService = Depends(),
     db: Session = Depends(get_db),
-    current_user: User = Depends(jwt_handle.get_current_user)):
-
-    files = db.query(File).filter(File.user_id == current_user.id).all()
-    return {
-        'files': [{
-            'id': f.id,
-            'filename': f.original_filename or f.filename,
-            'created_at': f.created_at.isoformat()
-        } for f in files]
-    }
+    current_user: User = Depends(JWTHandler().get_current_user)):
+    
+    try:
+        files = file_service.get_dashboard_data(db, current_user)
+        return {'files': files}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Dashboard load failed")

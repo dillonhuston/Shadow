@@ -5,16 +5,12 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jwt.exceptions import PyJWTError 
 from app.models.db import get_db
-from app.models.user import User
-from app.authservice.auth import AuthService
 from dotenv import load_dotenv
 
 from app.DatabaseOps.DatabaseRespitory import DatabaseOps
 
-#TDOo Make dependecy injection
 load_dotenv()
-auth_service = AuthService()
-db_ops = DatabaseOps()
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
@@ -24,7 +20,7 @@ class JWTHandler():
         self.ALGORTHIM = os.getenv("ALGORITHM", "HS256")
         
         
-    def get_current_user(self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    def get_current_user(self, db_ops: DatabaseOps, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

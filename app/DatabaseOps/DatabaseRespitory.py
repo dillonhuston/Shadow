@@ -38,5 +38,3 @@ class DatabaseOps():
         db.commit()
         db.refresh(file)
         return file    
-
-        

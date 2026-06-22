@@ -114,3 +114,12 @@ class FileService:
         
         self.db_ops.remove_file(db, user.id, file_id)
         return {'message': 'File deleted successfully'}
+    
+
+    def get_dashboard_data(self, db: Session, user: User) -> List[dict]:
+        files = self.db_ops.GetUserFileByUserid(db, str(user.id))
+        return [{
+            'id': f.id,
+            'filename': f.original_filename or f.filename,
+            'created_at': f.created_at.isoformat() if f.created_at else None
+        } for f in files]
