@@ -3,10 +3,11 @@ import base64
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.db import get_db
 from app.models.user import User
+
 from app.authservice.jwt_handler import JWTHandler
 from app.services.file_service import FileService
 from app.services.encryption import EncryptionError
@@ -20,7 +21,7 @@ async def upload_file(
     file: UploadFile,
     file_service: FileService,
     current_user: User = Depends(jwt_handle.get_current_user),
-    db: Session = Depends(get_db)):
+    db: AsyncSession = Depends(get_db)):
 
     if not file or not file.filename:
         raise HTTPException(
@@ -30,7 +31,7 @@ async def upload_file(
 
     try:
         file_data = await file.read()
-        result = file_service.upload_file(
+        result = await file_service.upload_file(
             db=db,
             file_data=file_data,
             filename=file.filename,
@@ -45,13 +46,13 @@ async def upload_file(
 
 
 @router.get('/files')
-def list_files(
+async def list_files(
     file_service: FileService,
     current_user: User = Depends(jwt_handle.get_current_user),
-    db: Session = Depends(get_db)):
+    db: AsyncSession = Depends(get_db)):
 
     try:
-        files = file_service.list_files(db, current_user)
+        files = await file_service.list_files(db, current_user)
         return {'files': files}
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to list files")
@@ -62,10 +63,10 @@ async def download_file(
     file_id: int,
     file_service: FileService,
     current_user: User = Depends(jwt_handle.get_current_user),
-    db: Session = Depends(get_db)):
+    db: AsyncSession = Depends(get_db)):
 
     try:
-        decrypted_data, filename = file_service.download_file(
+        decrypted_data, filename = await file_service.download_file(
             db=db,
             file_id=file_id,
             user=current_user
@@ -84,21 +85,21 @@ async def download_file(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Download failed")
+        raise HTTPException(status_code=500, detail=f"Download failed{e}")
 
 
 @router.delete('/delete/{file_id}')
-def delete_file(
+async def delete_file(
     file_id: int,
     file_service: FileService,
     current_user: User = Depends(jwt_handle.get_current_user),
-    db: Session = Depends(get_db)):
+    db: AsyncSession = Depends(get_db)):
     
     try:
-        result = file_service.delete_file(db, file_id, current_user)
+        result = await file_service.delete_file(db, file_id, current_user)
         return result
     except HTTPException:
         raise
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=500, detail="Failed to delete file")

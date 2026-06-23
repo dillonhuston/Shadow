@@ -1,7 +1,6 @@
 import uuid
 
 from sqlalchemy import select, delete
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.models.file import File as FileModel

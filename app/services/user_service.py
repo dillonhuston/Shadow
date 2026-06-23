@@ -6,7 +6,6 @@ from app.exceptions.exceptions import UserAlreadyExistsError, AuthenticationErro
 from app.schemas.User import UserSignup, UserLogin, ChangePassword
 
 from app.models.user import User
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.DatabaseOps.DatabaseRepository import DatabaseOps

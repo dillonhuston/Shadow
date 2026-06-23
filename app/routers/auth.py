@@ -1,7 +1,6 @@
 from app.dependencies import get_user_service, get_jwt_handler
 from fastapi import APIRouter, Depends
 
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.db import get_db
 from app.models.user import User

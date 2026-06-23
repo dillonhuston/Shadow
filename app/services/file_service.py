@@ -1,7 +1,7 @@
 import os
 import base64
 from typing import List, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.utils import secure_filename
 
 from app.models.file import File as FileModel
@@ -21,7 +21,7 @@ class FileService:
         """Safely extract user's key as string."""
         return str(user.key) if user.key is not None else ""
 
-    def upload_file(self, db: Session, file_data: bytes, filename: str, user: User):
+    async def upload_file(self, db: AsyncSession, file_data: bytes, filename: str, user: User):
         """Handle file upload, encryption, and database storage."""
         safe_filename = secure_filename(filename)
         encoded_data = base64.b64encode(file_data).decode('utf-8')
@@ -42,16 +42,16 @@ class FileService:
             original_filename=safe_filename
         )
         try:
-            self.db_ops.add_file(db, new_file)            
+            await self.db_ops.add_file(db, new_file)            
             return {'message': f'{safe_filename} uploaded'}
         except Exception:
-            db.rollback()
+            await db.rollback()
             raise
 
-    def list_files(self, db: Session, user: User) -> List[dict]:
+    async def list_files(self, db: AsyncSession, user: User) -> List[dict]:
         """List all files for a user."""
         files_info: List[dict] = []
-        user_files = self.db_ops.GetUserFileByUserid(db, user_id=user.id)
+        user_files = await self.db_ops.GetUserFileByUserid(db, user_id=user.id)
         
         for file_entry in user_files:
             filepath = file_entry.filepath
@@ -69,9 +69,9 @@ class FileService:
                 })
         return files_info
 
-    def download_file(self, db: Session, file_id: int, user: User) -> Tuple[bytes, str]:
+    async def download_file(self, db: AsyncSession, file_id: int, user: User) -> Tuple[bytes, str]:
         """Download and decrypt a file."""
-        file_entry = self.db_ops.GetFileEntry(db, user.id, file_id)
+        file_entry = await self.db_ops.GetFileEntry(db, user.id, file_id)
         
         if not file_entry:
             raise FileError
@@ -97,9 +97,9 @@ class FileService:
         except EncryptionServiceError:
             raise EncryptionServiceError
 
-    def delete_file(self, db: Session, file_id: int, user: User) -> dict:
+    async def delete_file(self, db: AsyncSession, file_id: int, user: User) -> dict:
         """Delete a file from filesystem and database."""
-        file_entry = self.db_ops.GetFileEntry(db, user.id, file_id)
+        file_entry = await self.db_ops.GetFileEntry(db, user.id, file_id)
         
         if not file_entry:
             raise FileError
@@ -112,12 +112,12 @@ class FileService:
             except OSError:
                 raise FileError
         
-        self.db_ops.remove_file(db, user.id, file_id)
+        await self.db_ops.remove_file(db, user.id, file_id)
         return {'message': 'File deleted successfully'}
     
 
-    def get_dashboard_data(self, db: Session, user: User) -> List[dict]:
-        files = self.db_ops.GetUserFileByUserid(db, str(user.id))
+    async def get_dashboard_data(self, db: AsyncSession, user: User) -> List[dict]:
+        files = await self.db_ops.GetUserFileByUserid(db, str(user.id))
         return [{
             'id': f.id,
             'filename': f.original_filename or f.filename,
