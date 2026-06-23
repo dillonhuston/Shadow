@@ -7,7 +7,7 @@ from jwt.exceptions import PyJWTError
 from app.models.db import get_db
 from dotenv import load_dotenv
 
-from app.DatabaseOps.DatabaseRespitory import DatabaseOps
+from app.DatabaseOps.DatabaseRepository import DatabaseOps
 
 load_dotenv()
 

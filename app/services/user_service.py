@@ -7,8 +7,9 @@ from app.schemas.User import UserSignup, UserLogin, ChangePassword
 
 from app.models.user import User
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.DatabaseOps.DatabaseRespitory import DatabaseOps
+from app.DatabaseOps.DatabaseRepository import DatabaseOps
 from app.authservice.auth import AuthService
 from app.authservice.jwt_handler import JWTHandler
 
@@ -20,8 +21,8 @@ class UserService():
         self.auth = auth
 
         
-    def register(self, db:Session, user: UserSignup):
-        if self.db_ops.GetUserByusername(db, user.username):
+    async def register(self, db: AsyncSession, user: UserSignup):
+        if await self.db_ops.GetUserByusername(db, user.username):
             raise UserAlreadyExistsError()
         
         hashed_password = self.auth.get_password_hash(user.password)
@@ -33,11 +34,11 @@ class UserService():
             password = hashed_password,
             key = os.urandom(16).hex() # this should not be happening here, i will get this implemented soon
         )
-        return self.db_ops.add(db, new_user)
+        return await self.db_ops.add(db, new_user)
 
 
-    def login(self, db: Session, user_login: UserLogin):
-        user = self.db_ops.GetUserByusername(db, user_login.username)
+    async def login(self, db: AsyncSession, user_login: UserLogin):
+        user = await self.db_ops.GetUserByusername(db, user_login.username)
         if not user or not self.auth.verify_password(user_login.password,user.password):
             raise AuthenticationError()
         
@@ -56,14 +57,13 @@ class UserService():
             "token_type": "bearer"
         }
     
-
-    def change_password(self, db: Session, user: User, password_data: ChangePassword):
+    async def change_password(self, db: AsyncSession, user: User, password_data: ChangePassword):
         if not re.match(r'^(?=.*[A-Za-z])(?=.*\d).{8,}$',password_data.new_password):
             raise IncorrectPasswordError
         
         if not self.auth.verify_password(password_data.current_password, str(user.password)):
             raise IncorrectPasswordError
         user.password = self.auth.get_password_hash(password_data.new_password)
-        db.commit()
+        await db.commit()
         return{"message": "Pasword changed"}
         

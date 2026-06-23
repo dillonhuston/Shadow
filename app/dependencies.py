@@ -1,4 +1,4 @@
-from app.DatabaseOps.DatabaseRespitory import DatabaseOps
+from app.DatabaseOps.DatabaseRepository import DatabaseOps
 from app.authservice.auth import AuthService
 from app.services.user_service import UserService
 from app.authservice.jwt_handler import JWTHandler
