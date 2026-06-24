@@ -16,8 +16,8 @@ class DatabaseOps():
     
     async def GetFileEntry(self, db: AsyncSession, user_id: str, file_id: int):
         result = await db.execute(select(FileModel).where(
-            FileModel.user_id == file_id,
-            FileModel.id == user_id,
+            FileModel.user_id == user_id, #changed this to user_id instead of file_id
+            FileModel.id == file_id, # got these both mixed up
             ))
         return result.scalar_one_or_none()
         

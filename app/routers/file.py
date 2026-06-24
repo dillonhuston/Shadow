@@ -10,7 +10,7 @@ from app.models.user import User
 
 from app.authservice.jwt_handler import JWTHandler
 from app.services.file_service import FileService
-from app.services.encryption import EncryptionError
+from app.exceptions.exceptions import EncryptionServiceError, FileError
 from app.config import Config 
 
 router = APIRouter(prefix="/file", tags=["files"])
@@ -39,9 +39,9 @@ async def upload_file(
         )
         return result
 
-    except EncryptionError as e:
+    except EncryptionServiceError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    except Exception as e:
+    except FileError as e:
         raise HTTPException(status_code=500, detail="Upload failed")
 
 

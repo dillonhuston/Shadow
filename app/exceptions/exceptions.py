@@ -16,3 +16,9 @@ class FileError(ServiceError):
 
 class EncryptionServiceError(ServiceError):
     pass
+
+class DatabaseError(ServiceError):
+    pass
+
+class DashboardError(ServiceError):
+    pass

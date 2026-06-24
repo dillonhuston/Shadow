@@ -63,6 +63,6 @@ class UserService():
         if not self.auth.verify_password(password_data.current_password, str(user.password)):
             raise IncorrectPasswordError
         user.password = self.auth.get_password_hash(password_data.new_password)
-        await db.commit()
+        await db.commit() #TODO remove this
         return{"message": "Pasword changed"}
         
