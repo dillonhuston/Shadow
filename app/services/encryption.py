@@ -14,25 +14,11 @@ from app.exceptions.exceptions import EncryptionServiceError
 
 logger = logging.getLogger(__name__)
 
-#TODO add async patterns
 
 class EncryptionService:
     """Handles file encryption and decryption using AES-EAX."""
 
-    @staticmethod
-    def _ensure_bytes_key(key: str | bytes | bytearray) -> bytes:
-        """Safely convert key to bytes."""
-        if isinstance(key, bytes):
-            return key
-        elif isinstance(key, bytearray):
-            return bytes(key)
-        elif isinstance(key, str):
-            return key.encode('utf-8')
-        else:
-            raise EncryptionServiceError("Key is not bytes.")
-
-    @staticmethod
-    def _ensure_str_key(key: str | bytes | bytearray) -> str:
+    def _ensure_str_key(self,key: str | bytes | bytearray) -> str:
         """Safely convert key to string for PBKDF2."""
         if isinstance(key, str):
             return key
@@ -88,7 +74,7 @@ class EncryptionService:
             tag = encrypted_data[16 + Config.NONCE_SIZE:16 + Config.NONCE_SIZE + Config.TAG_SIZE]
             ciphertext = encrypted_data[16 + Config.NONCE_SIZE + Config.TAG_SIZE:]
 
-            key_str = EncryptionService._ensure_str_key(key)
+            key_str = EncryptionService._ensure_str_key(self,key)
             derived_key = PBKDF2(key_str, salt, dkLen=Config.PBKDF2_DK_LEN, count=Config.PBKDF2_ITERATIONS)
 
             cipher = AES.new(derived_key, AES.MODE_EAX, nonce=nonce)

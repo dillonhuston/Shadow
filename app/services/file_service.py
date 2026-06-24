@@ -13,20 +13,19 @@ from app.services.encryption import EncryptionService
 from app.DatabaseOps.DatabaseRepository import DatabaseOps
 from app.exceptions.exceptions import FileError, EncryptionServiceError, DatabaseError, DashboardError
 
-
+#TODO again remove some uselss exceptions, slowly implement custom handler and reponses
 class FileService:
     def __init__(self, db_ops: DatabaseOps, encryption_service: EncryptionService) -> None:
         self.db_ops = db_ops
         self.encryption_service = encryption_service
 
-    @staticmethod
-    def _get_user_key(user: User) -> str:
+    async def _get_user_key(self,user: User) -> str:
         """Safely extract user's key as string."""
         return str(user.key) if user.key is not None else ""
 
     async def upload_file(self, db: AsyncSession, file_data: bytes, filename: str, user: User):
         safe_filename = secure_filename(filename)
-        user_key = FileService._get_user_key(user)
+        user_key = await FileService._get_user_key(self,user)
             
         encrypted_filename = await self.encryption_service.encrypt(
             file_data,
@@ -73,7 +72,7 @@ class FileService:
             raise FileError(f"File path {file_entry.filepath} does not exist")
         
         try:
-            user_key = FileService._get_user_key(user)
+            user_key = await self._get_user_key(user)
             decrypted_b64 = await self.encryption_service.decrypt(
                 file_entry.filename,
                 str(user.id),

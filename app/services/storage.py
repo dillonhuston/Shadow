@@ -8,13 +8,7 @@ from app.exceptions.exceptions import FileError
 logger = logging.getLogger(__name__)
 
 class FileStorageService:
-
-    @staticmethod
-    def get_dir_files(user_id: int, db: Session):
-        """Retrieves list of filenames associated with a user."""
-        files = db.query(FileModel).filter_by(user_id=user_id).all()
-        return [file.filename for file in files]
-
+    
     async def save_file(self, file_data: bytes, filename: str):
         if not file_data:
             raise FileError("No file data provided.")
