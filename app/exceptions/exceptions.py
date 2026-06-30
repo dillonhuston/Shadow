@@ -1,24 +1,34 @@
+from fastapi import status
+
 class ServiceError(Exception):
-    pass
+    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail: str = "An unexpected error occurred."
 
 class UserAlreadyExistsError(ServiceError):
-    pass
+    status_code = status.HTTP_409_CONFLICT
+    detail = "User already exists."
 
 class AuthenticationError(ServiceError):
-    pass
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Authentication failed."
 
 class IncorrectPasswordError(ServiceError):
-    pass
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Incorrect password."
 
 
 class FileError(ServiceError):
-    pass
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "File operation failed."
 
 class EncryptionServiceError(ServiceError):
-    pass
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Encryption error."
 
 class DatabaseError(ServiceError):
-    pass
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Database error."
 
 class DashboardError(ServiceError):
-    pass
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Dashboard error."
