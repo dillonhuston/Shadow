@@ -5,7 +5,11 @@
 
 **ShadowBox API**
 
+I have completed my work on this project for now. You are more than welcome to contribute and work on any issues as I am shifting my focus to polish other projects in my portfolio. The API is functional, stable, and uses a modular service-oriented architecture with global error handling.
+
 ShadowBox provides a hardened API for storing files with AES-256 encryption at rest. Built for security, the system ensures files are encrypted before hitting the disk and only decrypted upon authorized download. Designed as a modular service, it is perfect for deployment on local networks, private servers, or Raspberry Pi environments.
+
+
 
 
 ## Architecture & Security
