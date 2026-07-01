@@ -1,6 +1,6 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from app.exceptions import ServiceError
+from app.exceptions.exceptions import ServiceError # changed to include correct directory.
 
 async def service_exception_handler(request: Request, exc: ServiceError) -> JSONResponse:
     return JSONResponse(
