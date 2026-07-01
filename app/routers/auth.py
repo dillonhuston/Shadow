@@ -1,13 +1,10 @@
 from app.dependencies import get_user_service, get_jwt_handler
 from fastapi import APIRouter, Depends
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.db import get_db
 from app.models.user import User
 from app.schemas.User import UserLogin, ChangePassword, UserSignup, UserSignupResponse, UserSignOnResponse
-
 from app.services.user_service import UserService
-
 
 router = APIRouter(prefix="/auth")
 

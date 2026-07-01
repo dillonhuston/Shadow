@@ -13,8 +13,4 @@ async def dashboard(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(JWTHandler().get_current_user)):
     
-    try:
-        files = await file_service.get_dashboard_data(db, current_user)
-        return {'files': files}
-    except Exception:
-        raise HTTPException(status_code=500, detail="Dashboard load failed")
+    return {'files': await file_service.get_dashboard_data(db, current_user)}
